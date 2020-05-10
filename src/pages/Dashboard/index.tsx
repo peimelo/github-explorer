@@ -1,58 +1,64 @@
-import React from 'react';
+import React, { FormEvent, useState } from 'react';
 import { FiChevronRight } from 'react-icons/fi';
 import logoImg from '../../assets/logo.svg';
+import api from '../../services/api';
 import { Form, Repositories, Title } from './styles';
 
+interface Repository {
+  full_name: string;
+  description: string;
+  owner: {
+    login: string;
+    avatar_url: string;
+  };
+}
+
 const Dashboard: React.FC = () => {
+  const [newRepo, setNewRepo] = useState('');
+  const [repositories, setRepositories] = useState<Repository[]>([]);
+
+  async function handleAddRepository(
+    event: FormEvent<HTMLFormElement>,
+  ): Promise<void> {
+    event.preventDefault();
+
+    const response = await api.get<Repository>(`repos/${newRepo}`);
+
+    const repository = response.data;
+
+    setRepositories([...repositories, repository]);
+    setNewRepo('');
+  }
+
   return (
     <>
       <img src={logoImg} alt="Github Explorer" />
       <Title>Explore repositórios no Github</Title>
 
-      <Form>
-        <input placeholder="Digite o nome do repositório" type="text" />
+      <Form onSubmit={handleAddRepository}>
+        <input
+          value={newRepo}
+          onChange={e => setNewRepo(e.target.value)}
+          placeholder="Digite o nome do repositório"
+        />
         <button type="submit">Pesquisar</button>
       </Form>
 
       <Repositories>
-        <a href="teste">
-          <img
-            src="https://avatars0.githubusercontent.com/u/94702?s=460&u=27bc218c260b6a29c601d9a1228ea1104422f0ca&v=4"
-            alt="Paulo Melo"
-          />
-          <div>
-            <strong>peimelo/react</strong>
-            <p>Template from React</p>
-          </div>
+        {repositories.map(repository => (
+          <a key={repository.full_name} href="teste">
+            <img
+              src={repository.owner.avatar_url}
+              alt={repository.owner.login}
+            />
+            <div>
+              <strong>{repository.full_name}</strong>
+              <p>{repository.description}</p>
+            </div>
 
-          <FiChevronRight size={20} />
-        </a>
-
-        <a href="teste">
-          <img
-            src="https://avatars0.githubusercontent.com/u/94702?s=460&u=27bc218c260b6a29c601d9a1228ea1104422f0ca&v=4"
-            alt="Paulo Melo"
-          />
-          <div>
-            <strong>peimelo/react</strong>
-            <p>Template from React</p>
-          </div>
-
-          <FiChevronRight size={20} />
-        </a>
-
-        <a href="teste">
-          <img
-            src="https://avatars0.githubusercontent.com/u/94702?s=460&u=27bc218c260b6a29c601d9a1228ea1104422f0ca&v=4"
-            alt="Paulo Melo"
-          />
-          <div>
-            <strong>peimelo/react</strong>
-            <p>Template from React</p>
-          </div>
-
-          <FiChevronRight size={20} />
-        </a>
+            <FiChevronRight size={20} />
+          </a>
+        ))}
       </Repositories>
     </>
   );
